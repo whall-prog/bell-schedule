@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1024 768" xmlns="http://www.w3.org/2000/svg">
+  <!-- Spartan Logo SVG -->
+  <g transform="translate(235, 90) scale(0.7)">
+    <!-- Helmet Crest (plume) -->
+    <path d="M 300 150 Q 350 80 400 150 L 420 200 Q 370 120 350 200 Z" fill="#c0c0c0" stroke="#1a2d5c" stroke-width="8"/>
+    <path d="M 400 150 Q 450 70 500 150 L 520 200 Q 470 100 450 200 Z" fill="#c0c0c0" stroke="#1a2d5c" stroke-width="8"/>
+    <path d="M 500 150 Q 550 80 600 150 L 620 200 Q 570 120 550 200 Z" fill="#c0c0c0" stroke="#1a2d5c" stroke-width="8"/>
+    
+    <!-- Helmet Bowl -->
+    <ellipse cx="450" cy="300" rx="180" ry="160" fill="#1a2d5c" stroke="#1a2d5c" stroke-width="12"/>
+    <ellipse cx="450" cy="290" rx="160" ry="140" fill="#c0c0c0" stroke="#1a2d5c" stroke-width="8"/>
+    
+    <!-- Face Opening -->
+    <path d="M 380 320 Q 400 380 450 400 Q 500 380 520 320" fill="#c0c0c0" stroke="#1a2d5c" stroke-width="8"/>
+    
+    <!-- Nose Guard -->
+    <polygon points="450,280 440,380 450,420 460,380" fill="#1a2d5c" stroke="#1a2d5c" stroke-width="6"/>
+    
+    <!-- Cheek Pieces -->
+    <path d="M 380 320 Q 300 340 280 380 Q 300 400 380 390" fill="#1a2d5c" stroke="#1a2d5c" stroke-width="8"/>
+    <path d="M 520 320 Q 600 340 620 380 Q 600 400 520 390" fill="#1a2d5c" stroke="#1a2d5c" stroke-width="8"/>
+    
+    <!-- Rivets/Details -->
+    <circle cx="400" cy="360" r="8" fill="#d0d0d0"/>
+    <circle cx="450" cy="370" r="8" fill="#d0d0d0"/>
+    <circle cx="500" cy="360" r="8" fill="#d0d0d0"/>
+  </g>
+</svg>
