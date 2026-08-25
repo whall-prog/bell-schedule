@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esparto High School Bell Schedule</title>
+<style>
+  :root {
+    --bg: #111827;
+    --panel: rgba(0,0,0,.30);
+    --text: #fff;
+    --accent: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--text);
+    background: #17145b;
+    transition: background .5s ease;
+    overflow-x: hidden;
+  }
+  body.alert-red { background: #b91c1c; }
+  body.alert-yellow { background: #eab308; color: #111; }
+  body.alert-green { background: #15803d; }
+  body.bell-alert { animation: flash .35s 8 alternate; }
+
+  @keyframes flash {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.6); }
+  }
+
+
+  #spartanLogo {
+    position: absolute;
+    left: 22px;
+    top: 16px;
+    width: clamp(70px, 9vw, 130px);
+    height: auto;
+    max-height: 115px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 7px rgba(0,0,0,.35));
+  }
+
+  header {
+    position: relative;
+    text-align: center;
+    padding: 18px 12px 8px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 4vw, 3rem);
+    letter-spacing: .04em;
+  }
+  #status {
+    margin-top: 6px;
+    font-size: clamp(.9rem, 2vw, 1.2rem);
+    font-weight: 700;
+  }
+
+  main {
+    width: min(1200px, 94vw);
+    margin: auto;
+    display: grid;
+    grid-template-columns: 1.6fr .8fr;
+    gap: 18px;
+    padding-bottom: 125px;
+  }
+
+  .clock-card, .schedule-card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 20px;
+    box-shadow: 0 10px 35px rgba(0,0,0,.25);
+    backdrop-filter: blur(5px);
+  }
+
+  .clock-card {
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    text-align: center;
+  }
+
+  #clock {
+    font-size: clamp(4.5rem, 13vw, 11rem);
+    line-height: .9;
+    font-weight: 900;
+    letter-spacing: .02em;
+    font-variant-numeric: tabular-nums;
+  }
+  #ampm {
+    font-size: clamp(1.3rem, 3vw, 2.5rem);
+    font-weight: 800;
+    margin-top: 15px;
+  }
+  #currentPeriod {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 900;
+    margin-top: 30px;
+  }
+  #countdownLabel {
+    margin-top: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  #countdown {
+    font-size: clamp(3rem, 7.5vw, 6.5rem);
+    line-height: 1;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    margin-top: 5px;
+  }
+  #countdown.urgent {
+    animation: pulse .55s infinite alternate;
+  }
+  @keyframes pulse {
+    to { transform: scale(1.08); }
+  }
+
+  .schedule-card {
+    padding: 16px;
+    overflow: hidden;
+  }
+  .schedule-card h2 {
+    margin: 2px 0 12px;
+    font-size: 1.35rem;
+  }
+  #scheduleList {
+    max-height: 490px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 10px 8px;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.09);
+  }
+  .row.active {
+    outline: 3px solid rgba(255,255,255,.85);
+    background: rgba(255,255,255,.20);
+    font-weight: 900;
+  }
+  .row.break { opacity: .8; }
+  .name { font-weight: 800; }
+  .time { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .controls {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 20;
+    background: rgba(15,23,42,.96);
+    border-top: 1px solid rgba(255,255,255,.2);
+    padding: 10px;
+  }
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+  }
+  button {
+    border: 0;
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-weight: 800;
+    cursor: pointer;
+    background: #f8fafc;
+    color: #111827;
+  }
+  button:hover { transform: translateY(-1px); }
+  button.selected {
+    background: #38bdf8;
+    color: #082f49;
+  }
+  #audioBtn {
+    display: block;
+    margin: 8px auto 0;
+    background: #fbbf24;
+  }
+
+  #bellAnimation {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    pointer-events: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.35);
+  }
+  #bellAnimation.show { display: flex; }
+  .bell {
+    font-size: min(30vw, 260px);
+    animation: ring .16s infinite alternate;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,.4));
+  }
+  @keyframes ring {
+    from { transform: rotate(-14deg); }
+    to { transform: rotate(14deg); }
+  }
+
+  .notice {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 12px 8px;
+    text-align: center;
+    font-size: .82rem;
+    opacity: .85;
+  }
+
+  @media (max-width: 800px) {
+
+    #spartanLogo {
+      position: static;
+      display: block;
+      margin: 4px auto 8px;
+      width: 75px;
+      max-height: 75px;
+    }
+    main { grid-template-columns: 1fr; }
+    .clock-card { min-height: 440px; }
+    #scheduleList { max-height: 300px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img id="spartanLogo" src="images/spartan-logo.png" alt="Esparto Spartan logo">
+  <h1>Esparto High School Bell Schedule</h1>
+  <div id="status">Loading schedule…</div>
+</header>
+
+<main>
+  <section class="clock-card">
+    <div id="clock">--:--:--</div>
+    <div id="ampm">--</div>
+    <div id="currentPeriod">Loading…</div>
+    <div id="countdownLabel">Time remaining</div>
+    <div id="countdown">--:--</div>
+  </section>
+
+  <section class="schedule-card">
+    <h2 id="scheduleTitle">Schedule</h2>
+    <div id="scheduleList"></div>
+  </section>
+</main>
+
+<div class="notice">
+  Tip: Click <b>Enable Bell Sound</b> once after opening the page. Browsers block automatic audio until the user interacts with the page.
+</div>
+
+<div class="controls">
+  <div class="buttons" id="scheduleButtons"></div>
+  <button id="audioBtn" onclick="enableAudio()">🔔 Enable Bell Sound</button>
+</div>
+
+<div id="bellAnimation"><div class="bell">🔔</div></div>
+
+<script>
+/*
+  Esparto High School Bell Schedule
+  Schedule data transcribed from the uploaded 2026-2027 schedule.
+*/
+const schedules = {
+  regular: {
+    label: "Mon / Tues / Fri",
+    items: [
+      ["1", "8:00 AM", "8:51 AM", "period"],
+      ["2", "8:55 AM", "9:46 AM", "period"],
+      ["Brunch", "9:46 AM", "10:00 AM", "break"],
+      ["3", "10:04 AM", "10:55 AM", "period"],
+      ["4", "10:59 AM", "11:50 AM", "period"],
+      ["5", "11:54 AM", "12:50 PM", "period"],
+      ["Lunch", "12:50 PM", "1:25 PM", "break"],
+      ["6", "1:29 PM", "2:20 PM", "period"],
+      ["7", "2:24 PM", "3:15 PM", "period"]
+    ]
+  },
+  wednesday: {
+    label: "Wednesday Block — Shortened Day",
+    items: [
+      ["2", "8:00 AM", "9:37 AM", "period"],
+      ["4", "9:41 AM", "11:18 AM", "period"],
+      ["Lunch", "11:18 AM", "11:53 AM", "break"],
+      ["6", "11:57 AM", "1:35 PM", "period"]
+    ]
+  },
+  thursday: {
+    label: "Thursday Block",
+    items: [
+      ["1", "8:00 AM", "9:35 AM", "period"],
+      ["Brunch", "9:35 AM", "9:49 AM", "break"],
+      ["3", "9:53 AM", "11:25 AM", "period"],
+      ["5", "11:29 AM", "1:01 PM", "period"],
+      ["Lunch", "1:01 PM", "1:36 PM", "break"],
+      ["7", "1:40 PM", "3:15 PM", "period"]
+    ]
+  },
+  minimum: {
+    label: "Minimum Day",
+    items: [
+      ["1", "8:00 AM", "8:30 AM", "period"],
+      ["2", "8:34 AM", "9:04 AM", "period"],
+      ["3", "9:08 AM", "9:38 AM", "period"],
+      ["4", "9:42 AM", "10:15 AM", "period"],
+      ["Brunch", "10:15 AM", "10:28 AM", "break"],
+      ["5", "10:32 AM", "11:02 AM", "period"],
+      ["6", "11:06 AM", "11:36 AM", "period"],
+      ["7", "11:40 AM", "12:10 PM", "period"]
+    ]
+  },
+  rally: {
+    label: "Rally Schedule",
+    items: [
+      ["1", "8:00 AM", "8:43 AM", "period"],
+      ["2", "8:47 AM", "9:29 AM", "period"],
+      ["Brunch", "9:29 AM", "9:44 AM", "break"],
+      ["3", "9:48 AM", "10:30 AM", "period"],
+      ["4", "10:34 AM", "11:17 AM", "period"],
+      ["5", "11:21 AM", "12:05 PM", "period"],
+      ["Rally", "12:05 PM", "12:55 PM", "event"],
+      ["Check-in", "12:55 PM", "1:05 PM", "break"],
+      ["Lunch", "1:05 PM", "1:40 PM", "break"],
+      ["6", "1:44 PM", "2:27 PM", "period"],
+      ["7", "2:31 PM", "3:15 PM", "period"]
+    ]
+  }
+};
+
+let selected = "regular";
+let audioCtx = null;
+let audioEnabled = false;
+let lastBellKey = null;
+let previousActiveKey = null;
+
+const buttonNames = [
+  ["regular", "Mon / Tues / Fri"],
+  ["wednesday", "Wednesday Block"],
+  ["thursday", "Thursday Block"],
+  ["minimum", "Minimum Day"],
+  ["rally", "Rally Schedule"]
+];
+
+function parseTime(t, baseDate = new Date()) {
+  const m = t.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+  let h = Number(m[1]), min = Number(m[2]);
+  const ap = m[3].toUpperCase();
+  if (ap === "PM" && h !== 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  const d = new Date(baseDate);
+  d.setHours(h, min, 0, 0);
+  return d;
+}
+
+function formatTime(d) {
+  return d.toLocaleTimeString([], {hour: "numeric", minute: "2-digit"});
+}
+
+function buildButtons() {
+  const holder = document.getElementById("scheduleButtons");
+  holder.innerHTML = "";
+  buttonNames.forEach(([key, label]) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.className = key === selected ? "selected" : "";
+    b.onclick = () => {
+      selected = key;
+      lastBellKey = null;
+      renderSchedule();
+      update();
+    };
+    holder.appendChild(b);
+  });
+}
+
+function renderSchedule() {
+  const schedule = schedules[selected];
+  document.getElementById("scheduleTitle").textContent = schedule.label;
+  const list = document.getElementById("scheduleList");
+  list.innerHTML = "";
+  schedule.items.forEach((item, i) => {
+    const [name, start, end, type] = item;
+    const row = document.createElement("div");
+    row.className = "row " + (type === "break" ? "break" : "");
+    row.id = "row-" + i;
+    row.innerHTML = `<div class="name">${name}${type === "break" ? " •" : ""}</div>
+                     <div class="time">${start} – ${end}</div>`;
+    list.appendChild(row);
+  });
+}
+
+function setAlert(minutesLeft) {
+  document.body.classList.remove("alert-red","alert-yellow","alert-green");
+  if (minutesLeft <= 5 && minutesLeft > 3) {
+    document.body.classList.add("alert-red");
+  } else if (minutesLeft <= 3 && minutesLeft > 1) {
+    document.body.classList.add("alert-yellow");
+  } else if (minutesLeft <= 1 && minutesLeft > 0) {
+    document.body.classList.add("alert-green");
+  }
+}
+
+function enableAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    audioEnabled = true;
+    document.getElementById("audioBtn").textContent = "🔔 Bell Sound Enabled";
+    document.getElementById("audioBtn").style.background = "#86efac";
+  } catch (e) {
+    alert("Your browser could not enable audio. The visual bell will still work.");
+  }
+}
+
+function ringBell() {
+  const now = Date.now();
+  const key = selected + "-" + new Date().toDateString() + "-" + now;
+  if (lastBellKey === key) return;
+  lastBellKey = key;
+
+  document.body.classList.add("bell-alert");
+  const anim = document.getElementById("bellAnimation");
+  anim.classList.add("show");
+  setTimeout(() => {
+    anim.classList.remove("show");
+    document.body.classList.remove("bell-alert");
+  }, 10000);
+
+  if (!audioEnabled || !audioCtx) return;
+
+  // One 10-second bell sound: several decaying partials create a bell-like tone.
+  const duration = 10;
+  const start = audioCtx.currentTime;
+  [440, 660, 880].forEach((freq, index) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(index === 0 ? 0.28 : 0.12, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(start);
+    osc.stop(start + duration);
+  });
+}
+
+function updateClockOnly() {
+  const now = new Date();
+  document.getElementById("clock").textContent =
+    now.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+  document.getElementById("ampm").textContent =
+    now.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).split(" ").pop();
+}
+
+function formatHMS(totalSeconds) {
+  totalSeconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2,"0")}:${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+}
+
+function update() {
+  const now = new Date();
+  const schedule = schedules[selected];
+  const items = schedule.items;
+
+  // Always refresh the visible clock first.
+  updateClockOnly();
+
+  let activeIndex = -1;
+  let state = "before";
+
+  for (let i = 0; i < items.length; i++) {
+    const start = parseTime(items[i][1], now);
+    const end = parseTime(items[i][2], now);
+    if (now >= start && now < end) {
+      activeIndex = i;
+      state = "active";
+      break;
+    }
+    if (now < start) {
+      activeIndex = i;
+      state = "before";
+      break;
+    }
+  }
+
+  document.querySelectorAll(".row").forEach(r => r.classList.remove("active"));
+
+  if (activeIndex >= 0) {
+    const item = items[activeIndex];
+    const start = parseTime(item[1], now);
+    const end = parseTime(item[2], now);
+    document.getElementById("row-" + activeIndex)?.classList.add("active");
+
+    if (state === "active") {
+      const seconds = Math.max(0, Math.ceil((end - now) / 1000));
+      const minutesLeft = (end - now) / 60000;
+      setAlert(minutesLeft);
+
+      const activeKey = selected + "-" + now.toDateString() + "-" + activeIndex;
+      if (previousActiveKey !== null && previousActiveKey !== activeKey) {
+        ringBell();
+      }
+      previousActiveKey = activeKey;
+
+      document.getElementById("currentPeriod").textContent =
+        item[3] === "period" ? `Period ${item[0]}` :
+        item[0] === "Rally" ? "RALLY" : item[0];
+
+      document.getElementById("countdownLabel").textContent =
+        `Time until ${item[0] === "Rally" ? "Rally ends" : "bell"} — ${item[2]}`;
+
+      if (seconds <= 30) {
+        document.getElementById("countdown").textContent =
+          formatHMS(seconds);
+        document.getElementById("countdown").classList.add("urgent");
+      } else {
+        document.getElementById("countdown").textContent =
+          formatHMS(seconds);
+        document.getElementById("countdown").classList.remove("urgent");
+      }
+
+      // The transition to the next scheduled item triggers the bell once.
+    } else {
+      previousActiveKey = null;
+      const secondsUntil = Math.max(0, Math.ceil((start - now) / 1000));
+      document.getElementById("currentPeriod").textContent =
+        item[3] === "period" ? `Next: Period ${item[0]}` : `Next: ${item[0]}`;
+      document.getElementById("countdownLabel").textContent = `Starts at ${item[1]}`;
+      document.getElementById("countdown").textContent = formatHMS(secondsUntil);
+      document.getElementById("countdown").classList.toggle("urgent", secondsUntil <= 30);
+      setAlert(99);
+    }
+  } else {
+    document.getElementById("currentPeriod").textContent = "School Day Complete";
+    document.getElementById("countdownLabel").textContent = "No more scheduled events";
+    document.getElementById("countdown").textContent = "00:00";
+    previousActiveKey = null;
+    setAlert(99);
+  }
+
+  document.getElementById("status").textContent =
+    `${schedule.label} • ${now.toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"})}`;
+}
+
+buildButtons();
+renderSchedule();
+update();
+// Keep the clock visibly live once per second.
+setInterval(updateClockOnly, 1000);
+
+// Update the schedule/countdown frequently enough for an accurate bell countdown.
+setInterval(update, 250);
+</script>
+</body>
+</html>
